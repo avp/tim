@@ -1,8 +1,12 @@
+use regex::Regex;
 use serde_json;
 use serde_json::Value;
+use std::fmt;
 use std::io;
 use std::io::ErrorKind;
 use std::process::Command;
+
+use termion::color;
 
 #[derive(Deserialize, Debug)]
 pub struct LogLine {
@@ -16,6 +20,30 @@ pub struct LogLine {
   pub bookmarks: Vec<String>,
   pub tags: Vec<String>,
   pub parents: Vec<String>,
+}
+
+impl LogLine {
+  fn name(&self) -> String {
+    lazy_static! {
+      static ref REGEX_USER: Regex = Regex::new(r"(.*)\s*<(.*)>").unwrap();
+    }
+    let cap = REGEX_USER.captures(&self.user).unwrap();
+    format!("{}", &cap[1])
+  }
+}
+
+impl fmt::Display for LogLine {
+  // This trait requires `fmt` with this exact signature.
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.rev)?;
+    write!(f,
+           "\t{}{}{}",
+           color::Fg(color::Green),
+           &self.name(),
+           color::Fg(color::Reset))?;
+    write!(f, "\t{}", &self.desc)?;
+    write!(f, "{}", color::Fg(color::Reset))
+  }
 }
 
 pub fn log() -> io::Result<Vec<LogLine>> {

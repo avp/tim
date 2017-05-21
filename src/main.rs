@@ -1,8 +1,13 @@
+#[macro_use]
+extern crate lazy_static;
+
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
 extern crate termion;
+
+extern crate regex;
 
 use std::env;
 use std::io::{Write, stdin, stdout};
@@ -21,10 +26,10 @@ fn main() {
   let stdin = stdin();
 
   let log = match hg::log() {
-    Ok(l) => {
+    Ok(lines) => {
       let mut result = String::new();
-      for c in l {
-        result += &format!("\r{} {}\n", c.user, c.desc);
+      for line in lines {
+        result += &format!("\r{}\n", line);
       }
       result
     }
