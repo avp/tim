@@ -1,3 +1,6 @@
+extern crate serde_json;
+#[macro_use] extern crate serde_derive;
+
 extern crate termion;
 
 use std::env;
@@ -18,7 +21,13 @@ fn main() {
   let mut stdout = stdout().into_raw_mode().unwrap();
 
   let log = match hg::log() {
-    Ok(l) => String::from_utf8(l).unwrap(),
+    Ok(l) => {
+      let mut result = String::new();
+      for c in l {
+        result += &format!("\r{} {}\n", c.user, c.desc);
+      }
+      result
+    }
     Err(_) => String::from("Failed to fetch log"),
   };
 
@@ -26,10 +35,10 @@ fn main() {
          "{}{}{}{}",
          // Clear the screen.
          termion::clear::All,
-         // Output the log.
-         log,
          // Goto (1,1).
          termion::cursor::Goto(1, 1),
+         // Output the log.
+         log,
          // Hide the cursor.
          termion::cursor::Hide)
       .unwrap();
@@ -37,13 +46,6 @@ fn main() {
   stdout.flush().unwrap();
 
   for c in stdin.keys() {
-    // Clear the current line.
-    write!(stdout,
-           "{}{}",
-           termion::cursor::Goto(1, 1),
-           termion::clear::CurrentLine)
-        .unwrap();
-
     // Print the key we type...
     match c.unwrap() {
       // Exit.
@@ -61,6 +63,13 @@ fn main() {
     // Flush again.
     stdout.flush().unwrap();
   }
+
+  // Clear the current line.
+  write!(stdout,
+         "{}{}",
+         termion::cursor::Goto(1, 1),
+         termion::clear::All)
+    .unwrap();
 
   // Show the cursor again before we exit.
   write!(stdout, "{}", termion::cursor::Show).unwrap();
