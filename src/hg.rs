@@ -1,6 +1,7 @@
 use serde_json;
 use serde_json::Value;
 use std::io;
+use std::io::ErrorKind;
 use std::process::Command;
 
 #[derive(Deserialize, Debug)]
@@ -17,18 +18,15 @@ pub struct LogLine {
   pub parents: Vec<String>,
 }
 
-impl ToString for LogLine {
-  fn to_string(&self) -> String {
-    let mut result = String::new();
-    result += &self.user;
-    result += &self.desc;
-    result
-  }
-}
-
 pub fn log() -> io::Result<Vec<LogLine>> {
   let output = Command::new("hg").arg("log").arg("-Tjson").output()?;
-  let log: Value = serde_json::from_str(&String::from_utf8(output.stdout).unwrap())
-    .expect("Invalid hg log output");
-  Ok(serde_json::from_value(log).unwrap())
+  let status = output.status;
+
+  if status.success() {
+    let logstr = String::from_utf8(output.stdout).unwrap();
+    let log: Value = serde_json::from_str(&logstr).unwrap();
+    Ok(serde_json::from_value(log).unwrap())
+  } else {
+    Err(io::Error::new(ErrorKind::Other, "No mercurial repository found"))
+  }
 }
