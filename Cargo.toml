@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Aakash Patel <aakpat6@gmail.com>"]
 
 [dependencies]
+chrono = "0.3.1"
 lazy_static = "0.2.8"
 regex = "0.2"
 serde = "1.0"

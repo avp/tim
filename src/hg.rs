@@ -1,3 +1,5 @@
+use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::offset::TimeZone;
 use regex::Regex;
 use serde_json;
 use serde_json::Value;
@@ -15,7 +17,7 @@ pub struct LogLine {
   pub branch: String,
   pub phase: String,
   pub user: String,
-  pub date: Vec<u64>,
+  pub date: (i64, i32),
   pub desc: String,
   pub bookmarks: Vec<String>,
   pub tags: Vec<String>,
@@ -30,14 +32,25 @@ impl LogLine {
     let cap = REGEX_USER.captures(&self.user).unwrap();
     format!("{}", &cap[1])
   }
+
+  fn time(&self) -> String {
+    let ts = NaiveDateTime::from_timestamp(self.date.0, 0);
+    let tz = TimeZone::from_offset(&FixedOffset::west(self.date.1));
+    let dt = DateTime::<FixedOffset>::from_utc(ts, tz);
+    format!("{}", dt.format("%Y-%m-%d %H:%M"))
+  }
 }
 
 impl fmt::Display for LogLine {
   // This trait requires `fmt` with this exact signature.
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{}", self.rev)?;
     write!(f,
-           "\t{}{}{}",
+           "{}{}{}",
+           color::Fg(color::Red),
+           &self.time(),
+           color::Fg(color::Reset))?;
+    write!(f,
+           "  {}{}{}",
            color::Fg(color::Green),
            &self.name(),
            color::Fg(color::Reset))?;
