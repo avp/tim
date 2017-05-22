@@ -3,6 +3,7 @@ use chrono::offset::TimeZone;
 use regex::Regex;
 use serde_json;
 use serde_json::Value;
+use std::env;
 use std::fmt;
 use std::io;
 use std::io::ErrorKind;
@@ -30,7 +31,7 @@ impl LogLine {
       static ref REGEX_USER: Regex = Regex::new(r"(.*)\s*<(.*)>").unwrap();
     }
     let cap = REGEX_USER.captures(&self.user).unwrap();
-    format!("{}", &cap[1])
+    cap[1].to_string()
   }
 
   fn time(&self) -> String {
@@ -68,6 +69,8 @@ pub fn log() -> io::Result<Vec<LogLine>> {
     let log: Value = serde_json::from_str(&logstr).unwrap();
     Ok(serde_json::from_value(log).unwrap())
   } else {
-    Err(io::Error::new(ErrorKind::Other, "No mercurial repository found"))
+    let msg = format!("No mercurial repository found in specified root: {}",
+                      &env::current_dir().unwrap().display());
+    Err(io::Error::new(ErrorKind::Other, msg))
   }
 }

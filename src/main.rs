@@ -21,7 +21,7 @@ use termion::raw::IntoRawMode;
 mod hg;
 
 fn main() {
-  let dir = env::args().nth(1).unwrap_or(String::from("."));
+  let dir = env::args().nth(1).unwrap_or_else(|| String::from("."));
   env::set_current_dir(&dir).expect("Invalid directory specified");
 
   // Get the standard input stream.
@@ -35,9 +35,8 @@ fn main() {
       }
       result
     }
-    Err(_) => {
-      println!("No mercurial repository found in specified root: {}",
-               &env::current_dir().unwrap().display());
+    Err(e) => {
+      println!("{}", e);
       process::exit(255);
     }
   };
