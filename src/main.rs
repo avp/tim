@@ -1,5 +1,7 @@
 extern crate chrono;
 
+extern crate clap;
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -20,9 +22,29 @@ use termion::raw::IntoRawMode;
 
 mod hg;
 
+const TIM_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const TIM_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+
+fn get_args<'a>() -> clap::ArgMatches<'a> {
+  clap::App::new("tim")
+    .version(TIM_VERSION)
+    .author(TIM_AUTHORS)
+    .about("Text user interface for Mercurial")
+    .arg(clap::Arg::with_name("COMMAND")
+           .index(1)
+           .help("The command to run"))
+    .arg(clap::Arg::with_name("repo")
+           .short("r")
+           .long("repo")
+           .value_name("DIR")
+           .help("The directory containing the Mercurial repository"))
+    .get_matches()
+}
+
 fn main() {
-  let dir = env::args().nth(1).unwrap_or_else(|| String::from("."));
-  env::set_current_dir(&dir).expect("Invalid directory specified");
+  let args = get_args();
+  let dir = args.value_of("repo").unwrap_or(".");
+  env::set_current_dir(dir).expect("Invalid directory specified");
 
   // Get the standard input stream.
   let stdin = stdin();

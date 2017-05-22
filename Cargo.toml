@@ -5,6 +5,7 @@ authors = ["Aakash Patel <aakpat6@gmail.com>"]
 
 [dependencies]
 chrono = "0.3.1"
+clap = "2.24.2"
 lazy_static = "0.2.8"
 regex = "0.2"
 serde = "1.0"
