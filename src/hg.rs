@@ -74,3 +74,41 @@ pub fn log() -> io::Result<Vec<LogLine>> {
     Err(io::Error::new(ErrorKind::Other, msg))
   }
 }
+
+#[derive(Deserialize, Debug)]
+pub struct StatusLine {
+  path: String,
+  status: char,
+}
+
+impl fmt::Display for StatusLine {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self.status {
+      'M' => write!(f, "{}", color::Fg(color::LightBlue)),
+      'A' => write!(f, "{}", color::Fg(color::Green)),
+      'R' => write!(f, "{}", color::Fg(color::Red)),
+      'C' => write!(f, "{}", color::Fg(color::Yellow)),
+      '!' => write!(f, "{}", color::Fg(color::LightRed)),
+      '?' => write!(f, "{}", color::Fg(color::LightMagenta)),
+      'I' => write!(f, "{}", color::Fg(color::White)),
+      _ => unreachable!(),
+    }?;
+
+    write!(f, "{}\t{}", self.status, self.path)
+  }
+}
+
+pub fn status() -> io::Result<Vec<StatusLine>> {
+  let output = Command::new("hg").arg("status").arg("-Tjson").output()?;
+  let status = output.status;
+
+  if status.success() {
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let lines: Value = serde_json::from_str(&stdout).unwrap();
+    Ok(serde_json::from_value(lines).unwrap())
+  } else {
+    let msg = format!("No mercurial repository found in specified root: {}",
+                      &env::current_dir().unwrap().display());
+    Err(io::Error::new(ErrorKind::Other, msg))
+  }
+}

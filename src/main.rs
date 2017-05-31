@@ -32,6 +32,8 @@ fn get_args<'a>() -> clap::ArgMatches<'a> {
     .about("Text user interface for Mercurial")
     .arg(clap::Arg::with_name("COMMAND")
            .index(1)
+           .default_value("log")
+           .possible_values(&["log", "status"])
            .help("The command to run"))
     .arg(clap::Arg::with_name("repo")
            .short("r")
@@ -49,18 +51,38 @@ fn main() {
   // Get the standard input stream.
   let stdin = stdin();
 
-  let log = match hg::log() {
-    Ok(lines) => {
-      let mut result = String::new();
-      for line in lines {
-        result += &format!("\r{}\n", line);
+  let display_str: String = match args.value_of("COMMAND").unwrap() {
+    "log" => {
+      match hg::log() {
+        Ok(lines) => {
+          let mut result = String::new();
+          for line in lines {
+            result += &format!("\r{}\n", line);
+          }
+          result
+        }
+        Err(e) => {
+          println!("{}", e);
+          process::exit(255);
+        }
       }
-      result
     }
-    Err(e) => {
-      println!("{}", e);
-      process::exit(255);
+    "status" => {
+      match hg::status() {
+        Ok(lines) => {
+          let mut result = String::new();
+          for line in lines {
+            result += &format!("\r{}\n", line);
+          }
+          result
+        }
+        Err(e) => {
+          println!("{}", e);
+          process::exit(255);
+        }
+      }
     }
+    _ => unreachable!(),
   };
 
   // Get the standard output stream and go to raw mode.
@@ -68,7 +90,7 @@ fn main() {
 
   write!(stdout, "{}{}", termion::clear::All, termion::cursor::Hide).unwrap();
 
-  write!(stdout, "{}{}", termion::cursor::Goto(1, 1), log).unwrap();
+  write!(stdout, "{}{}", termion::cursor::Goto(1, 1), display_str).unwrap();
   stdout.flush().unwrap();
 
   for c in stdin.keys() {
