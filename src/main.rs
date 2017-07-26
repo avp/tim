@@ -1,5 +1,6 @@
 extern crate chrono;
 
+#[macro_use]
 extern crate clap;
 
 #[macro_use]
@@ -16,6 +17,8 @@ extern crate regex;
 use std::env;
 use std::io::{Write, stdin, stdout};
 use std::process;
+use std::str::FromStr;
+use std::string::FromUtf8Error;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
@@ -24,6 +27,23 @@ mod hg;
 
 const TIM_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const TIM_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+
+#[derive(Debug)]
+enum Mode {
+  Log,
+  Status,
+}
+
+impl FromStr for Mode {
+  type Err = FromUtf8Error;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "log" => Ok(Mode::Log),
+      "status" => Ok(Mode::Status),
+      _ => unreachable!(),
+    }
+  }
+}
 
 fn get_args<'a>() -> clap::ArgMatches<'a> {
   clap::App::new("tim")
@@ -51,8 +71,10 @@ fn main() {
   // Get the standard input stream.
   let stdin = stdin();
 
-  let display_str: String = match args.value_of("COMMAND").unwrap() {
-    "log" => {
+  let mode = value_t!(args.value_of("COMMAND"), Mode).unwrap();
+
+  let display_str: String = match mode {
+    Mode::Log => {
       match hg::log() {
         Ok(lines) => {
           let mut result = String::new();
@@ -67,7 +89,7 @@ fn main() {
         }
       }
     }
-    "status" => {
+    Mode::Status => {
       match hg::status() {
         Ok(lines) => {
           let mut result = String::new();
@@ -82,7 +104,6 @@ fn main() {
         }
       }
     }
-    _ => unreachable!(),
   };
 
   // Get the standard output stream and go to raw mode.

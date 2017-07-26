@@ -87,10 +87,10 @@ impl fmt::Display for StatusLine {
       'M' => write!(f, "{}", color::Fg(color::LightBlue)),
       'A' => write!(f, "{}", color::Fg(color::Green)),
       'R' => write!(f, "{}", color::Fg(color::Red)),
-      'C' => write!(f, "{}", color::Fg(color::Yellow)),
+      'C' => write!(f, "{}", color::Fg(color::Cyan)),
       '!' => write!(f, "{}", color::Fg(color::LightRed)),
       '?' => write!(f, "{}", color::Fg(color::LightMagenta)),
-      'I' => write!(f, "{}", color::Fg(color::White)),
+      'I' => write!(f, "{}", color::Fg(color::Yellow)),
       _ => unreachable!(),
     }?;
 
